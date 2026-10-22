@@ -1,6 +1,9 @@
 use maud::{html, Markup, DOCTYPE};
 use crate::storage::SharedFile;
 
+mod qr;
+pub use qr::render_qr_svg;
+
 pub fn render_room_page(
     room_token: &str,
     share_url: &str,

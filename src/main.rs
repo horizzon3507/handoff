@@ -32,6 +32,8 @@ async fn main() {
                 &files,
             );
             println!("Rendered room page: {} bytes", rendered_page.into_string().len());
+            let rendered_qr = web::render_qr_svg(&share_url).unwrap_or_default();
+            println!("Rendered room QR: {} bytes", rendered_qr.len());
             let _ = room_store.cleanup().await;
         }
         Err(error) => {
