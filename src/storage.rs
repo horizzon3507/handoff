@@ -88,10 +88,6 @@ impl RoomStore {
         self.inner.files.lock().await.get(&id).cloned()
     }
 
-    pub fn limits(&self) -> UploadLimits {
-        self.inner.limits
-    }
-
     pub async fn lock_uploads(&self) -> MutexGuard<'_, ()> {
         self.inner.upload_gate.lock().await
     }
@@ -116,10 +112,6 @@ impl RoomStore {
         }
 
         Ok(())
-    }
-
-    pub async fn cleanup(&self) -> io::Result<()> {
-        tokio::fs::remove_dir_all(&self.inner.directory).await
     }
 }
 

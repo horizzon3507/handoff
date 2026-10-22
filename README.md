@@ -1,35 +1,38 @@
 # Handoff
 
-Send files between devices on the same Wi-Fi network. No account or cloud storage required.
+Send files directly between devices on the same Wi-Fi network. No account or cloud storage required.
 
-## Getting started
+## Requirements
 
-Requires Node.js 22 or newer.
+- Rust 1.85 or newer
+- A computer and receiving devices on the same local network
+
+## Run from source
 
 ```sh
-npm install
-npm start
+cargo run --release
 ```
 
-Open <http://localhost:4173> on the computer running Handoff. Scan the QR code with another device on the same Wi-Fi, then open the link.
+Open the **This device** address printed in the terminal. Scan its QR code from another device on the same Wi-Fi and open the room link. Leave the terminal running while transferring files.
 
-## Send a file
+To choose a different port, set `HANDOFF_PORT` (default: `4173`). If automatic network address discovery does not work, set `HANDOFF_HOST` to the computer's local IPv4 address.
 
-Choose **Choose files** on either device and select one or more files. They appear under **Shared files** for everyone in the room. Choose **Download** on the receiving device; the browser saves it in its usual downloads folder.
+## Send and receive files
 
-To send in the other direction, choose files on the other device and download them from the first.
+Select one or more files in the room and choose **Share selected files**. They appear in the shared file list for every device using that room link. Choose **Download** on the receiving device; the browser saves each file in its usual downloads folder.
 
-## If the QR code does not work
-
-- Connect both devices to the same Wi-Fi. Guest networks may block devices from reaching one another.
-- Keep the terminal running while transferring files.
-- If Handoff was restarted, refresh the page on the computer and scan the new QR code. The previous room link expires when the server stops.
-- On the phone, scan the QR code instead of typing `localhost`; that address only works on the computer itself.
-
-## Close a room
-
-Press `Ctrl+C` in the terminal running Handoff. The room closes and temporary files are removed. Start a new room and use its new QR code next time.
+Files can also be sent in the other direction from the receiving device.
 
 ## Limits and privacy
 
-Files are stored temporarily on the computer running Handoff and are transferred over the local network. Each file can be up to 512 MB, with a 2 GB total limit per room.
+Each file can be up to 512 MB. A room can hold up to 200 files and 2 GB total. Files are written to a private temporary directory on the host computer and removed when Handoff closes. The room link acts as its access key, so share it only with trusted devices.
+
+## Troubleshooting
+
+- Connect both devices to the same Wi-Fi. Guest networks may block devices from reaching one another.
+- On a phone, scan the QR code or open the printed **Same Wi-Fi** link. `localhost` only works on the computer running Handoff.
+- If the room link stops working after a restart, open the new QR code. Each run creates a new temporary room and link.
+
+## Close a room
+
+Press `Ctrl-C` in the terminal. The server stops and removes the temporary files.
