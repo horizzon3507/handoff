@@ -19,6 +19,7 @@ async fn main() {
             println!("Handoff Rust server scaffold on port {}", config.port);
             println!("Local network address: {address:?}");
             println!("Temporary room created at {}", room_store.directory().display());
+            println!("Shared files: {}", room_store.list().await.len());
             let _ = room_store.cleanup().await;
         }
         Err(error) => {
