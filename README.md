@@ -1,52 +1,35 @@
 # Handoff
 
-Envie arquivos entre computador e celular pela mesma rede Wi-Fi. Sem conta e sem nuvem.
+Send files between devices on the same Wi-Fi network. No account or cloud storage required.
 
-## Tutorial rápido
+## Getting started
 
-### 1. Abra o Handoff no computador
-
-Instale o [Node.js 22 ou mais recente](https://nodejs.org/) e o [Git](https://git-scm.com/). Na primeira vez, abra o terminal e rode estes comandos:
+Requires Node.js 22 or newer.
 
 ```sh
-git clone https://github.com/horizzon3507/handoff.git
-cd handoff
 npm install
 npm start
 ```
 
-Nas próximas vezes, dentro da pasta `handoff`, basta iniciar o servidor:
+Open <http://localhost:4173> on the computer running Handoff. Scan the QR code with another device on the same Wi-Fi, then open the link.
 
-```sh
-npm start
-```
+## Send a file
 
-Deixe o terminal e o computador ligados. No computador, abra <http://localhost:4173>. A página mostrará um QR code.
+Choose **Choose files** on either device and select one or more files. They appear under **Shared files** for everyone in the room. Choose **Download** on the receiving device; the browser saves it in its usual downloads folder.
 
-### 2. Conecte o celular
+To send in the other direction, choose files on the other device and download them from the first.
 
-Conecte o celular ao mesmo Wi-Fi do computador. Abra a câmera, aponte para o QR code e toque no link que aparecer. Não digite `localhost` no celular: esse endereço só funciona no próprio computador.
+## If the QR code does not work
 
-### 3. Envie e baixe um arquivo
+- Connect both devices to the same Wi-Fi. Guest networks may block devices from reaching one another.
+- Keep the terminal running while transferring files.
+- If Handoff was restarted, refresh the page on the computer and scan the new QR code. The previous room link expires when the server stops.
+- On the phone, scan the QR code instead of typing `localhost`; that address only works on the computer itself.
 
-Para mandar uma foto do celular ao computador:
+## Close a room
 
-1. No celular, toque em **Choose files** e escolha a foto.
-2. Aguarde ela aparecer em **Shared files**.
-3. No computador, toque em **Download**. O navegador salva o arquivo na pasta de downloads.
+Press `Ctrl+C` in the terminal running Handoff. The room closes and temporary files are removed. Start a new room and use its new QR code next time.
 
-Para mandar na direção contrária, escolha o arquivo no computador e toque em **Download** no celular. Os dois aparelhos podem enviar arquivos.
+## Limits and privacy
 
-## Se o QR não funcionar
-
-- Confira se os dois aparelhos estão na mesma rede Wi-Fi. Redes de convidados podem bloquear a conexão entre aparelhos.
-- Mantenha o terminal aberto enquanto transfere.
-- Se o Handoff foi fechado ou reiniciado, atualize a página no computador e escaneie o QR novo. O QR antigo expira com a sala.
-
-## Encerrar
-
-No terminal onde o Handoff está rodando, pressione `Ctrl+C`. A sala fecha e os arquivos temporários são apagados. Cada vez que abrir o Handoff, use o QR code novo.
-
-## Limites e privacidade
-
-Cada arquivo pode ter até 512 MB; cada sala aceita até 2 GB no total. Os arquivos ficam temporariamente no computador que está rodando o Handoff e não são enviados para uma nuvem.
+Files are stored temporarily on the computer running Handoff and are transferred over the local network. Each file can be up to 512 MB, with a 2 GB total limit per room.
