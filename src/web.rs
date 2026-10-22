@@ -20,7 +20,7 @@ pub fn router(state: AppState) -> Router {
         .route("/", get(home))
         .route("/share/{token}", get(room_page))
         .route("/style.css", get(stylesheet))
-        .route("/qr/{token}.svg", get(qr_code))
+        .route("/qr/{token}", get(qr_code))
         .route("/upload/{token}", post(upload_files))
         .route("/files/{token}/{file_id}", get(download_file))
         .layer(DefaultBodyLimit::disable())
@@ -42,7 +42,7 @@ async fn room_page(Path(candidate): Path<String>, State(state): State<AppState>)
     let markup = render_room_page(
         state.token.as_str(),
         &share_url,
-        &format!("/qr/{}.svg", state.token.as_str()),
+        &format!("/qr/{}", state.token.as_str()),
         &files,
     );
     html_response(markup.into_string())
