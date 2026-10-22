@@ -2,10 +2,10 @@ use crate::state::AppState;
 use crate::storage::SharedFile;
 use axum::{
     body::Body,
-    extract::{Path, State},
+    extract::{DefaultBodyLimit, Multipart, Path, State},
     http::{header, HeaderValue, StatusCode},
     response::{IntoResponse, Redirect, Response},
-    routing::get,
+    routing::{get, post},
     Router,
 };
 use maud::{html, Markup, DOCTYPE};
@@ -21,6 +21,8 @@ pub fn router(state: AppState) -> Router {
         .route("/share/{token}", get(room_page))
         .route("/style.css", get(stylesheet))
         .route("/qr/{token}.svg", get(qr_code))
+        .route("/upload/{token}", post(upload_files))
+        .layer(DefaultBodyLimit::disable())
         .with_state(state)
 }
 
@@ -72,6 +74,38 @@ async fn qr_code(Path(candidate): Path<String>, State(state): State<AppState>) -
         }
         Err(_) => with_security_headers(StatusCode::INTERNAL_SERVER_ERROR.into_response()),
     }
+}
+
+async fn upload_files(
+    Path(candidate): Path<String>,
+    State(state): State<AppState>,
+    mut multipart: Multipart,
+) -> Response {
+    if !state.is_room_token(&candidate) {
+        return with_security_headers(StatusCode::NOT_FOUND.into_response());
+    }
+
+    let mut uploaded = 0usize;
+    loop {
+        let field = match multipart.next_field().await {
+            Ok(Some(field)) => field,
+            Ok(None) => break,
+            Err(_) => return with_security_headers(StatusCode::BAD_REQUEST.into_response()),
+        };
+        if field.file_name().is_none() {
+            continue;
+        }
+        let mut field = field;
+        match state.store.save_upload(&mut field).await {
+            Ok(_) => uploaded += 1,
+            Err(_) => return with_security_headers(StatusCode::PAYLOAD_TOO_LARGE.into_response()),
+        }
+    }
+
+    let location = format!("/share/{}?uploaded={uploaded}", state.token.as_str());
+    let mut response = Redirect::to(&location).into_response();
+    *response.status_mut() = StatusCode::SEE_OTHER;
+    with_security_headers(response)
 }
 
 fn html_response(body: String) -> Response {
@@ -150,11 +184,12 @@ pub fn render_room_page(
                                     span { (format_size(total_bytes)) }
                                 }
                             }
-                            div.drop-zone {
+                            form.drop-zone method="post" enctype="multipart/form-data" action=(format!("/upload/{room_token}")) {
                                 span.drop-icon aria-hidden="true" { span {} }
                                 p.drop-title { "Select files to share" }
                                 p.drop-detail { "Files appear for everyone in this room." }
-                                button.choose-button type="button" disabled { "Choose files" }
+                                input type="file" name="files" multiple required aria-label="Select files to share";
+                                button.choose-button type="submit" { "Share selected files" }
                             }
                             div.queue-heading { span { "ROOM CONTENTS" } span { "512 MB per file" } }
                             div.file-list {
