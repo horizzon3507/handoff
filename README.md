@@ -6,13 +6,16 @@ Envie arquivos entre computador e celular pela mesma rede Wi-Fi. Sem conta e sem
 
 ### 1. Abra o Handoff no computador
 
-Instale o [Node.js 22 ou mais recente](https://nodejs.org/) e, no terminal, entre na pasta do projeto. Na primeira vez, rode:
+Instale o [Node.js 22 ou mais recente](https://nodejs.org/) e o [Git](https://git-scm.com/). Na primeira vez, abra o terminal e rode estes comandos:
 
 ```sh
+git clone https://github.com/horizzon3507/handoff.git
+cd handoff
 npm install
+npm start
 ```
 
-Depois inicie o Handoff:
+Nas próximas vezes, dentro da pasta `handoff`, basta iniciar o servidor:
 
 ```sh
 npm start
