@@ -1,13 +1,39 @@
 use std::collections::HashMap;
+use std::fmt;
 use std::io;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, MutexGuard};
 use uuid::Uuid;
 
 mod file;
 pub use file::{safe_filename, SharedFile};
+
+#[derive(Clone, Copy)]
+pub struct UploadLimits {
+    pub file_bytes: u64,
+    pub room_bytes: u64,
+    pub room_files: usize,
+}
+
+#[derive(Debug)]
+pub enum UploadLimitError {
+    FileTooLarge,
+    RoomFileLimit,
+    RoomSizeLimit,
+}
+
+impl fmt::Display for UploadLimitError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let message = match self {
+            Self::FileTooLarge => "Each file must be 512 MB or smaller.",
+            Self::RoomFileLimit => "This room already has 200 files.",
+            Self::RoomSizeLimit => "This room has reached its 2 GB limit.",
+        };
+        formatter.write_str(message)
+    }
+}
 
 #[derive(Clone)]
 pub struct RoomStore {
@@ -18,6 +44,7 @@ struct RoomStoreInner {
     directory: PathBuf,
     files: Mutex<HashMap<Uuid, SharedFile>>,
     upload_gate: Mutex<()>,
+    limits: UploadLimits,
 }
 
 impl RoomStore {
@@ -36,6 +63,11 @@ impl RoomStore {
                 directory,
                 files: Mutex::new(HashMap::new()),
                 upload_gate: Mutex::new(()),
+                limits: UploadLimits {
+                    file_bytes: crate::config::MAX_FILE_BYTES,
+                    room_bytes: crate::config::MAX_ROOM_BYTES,
+                    room_files: crate::config::MAX_ROOM_FILES,
+                },
             }),
         })
     }
@@ -53,6 +85,36 @@ impl RoomStore {
 
     pub async fn get(&self, id: Uuid) -> Option<SharedFile> {
         self.inner.files.lock().await.get(&id).cloned()
+    }
+
+    pub fn limits(&self) -> UploadLimits {
+        self.inner.limits
+    }
+
+    pub async fn lock_uploads(&self) -> MutexGuard<'_, ()> {
+        self.inner.upload_gate.lock().await
+    }
+
+    pub async fn ensure_capacity(
+        &self,
+        additional_files: usize,
+        additional_bytes: u64,
+    ) -> Result<(), UploadLimitError> {
+        if additional_bytes > self.inner.limits.file_bytes {
+            return Err(UploadLimitError::FileTooLarge);
+        }
+
+        let files = self.inner.files.lock().await;
+        if files.len() + additional_files > self.inner.limits.room_files {
+            return Err(UploadLimitError::RoomFileLimit);
+        }
+
+        let current_bytes = files.values().map(|file| file.size).sum::<u64>();
+        if current_bytes + additional_bytes > self.inner.limits.room_bytes {
+            return Err(UploadLimitError::RoomSizeLimit);
+        }
+
+        Ok(())
     }
 
     pub async fn cleanup(&self) -> io::Result<()> {
