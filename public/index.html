@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#171b17">
+    <title>Handoff · Local transfer room</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/app.js" type="module"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="window-bar">
+        <div class="window-title">
+          <span class="connection-light" aria-hidden="true"></span>
+          <span>Handoff</span>
+          <span class="bar-separator" aria-hidden="true">/</span>
+          <span class="window-subtitle">local transfer room</span>
+        </div>
+        <span class="session-state"><span class="state-mark" aria-hidden="true"></span>Room open</span>
+      </header>
+
+      <div class="workspace">
+        <aside class="connect-panel" aria-labelledby="connect-title">
+          <div class="section-heading">
+            <span class="section-index">01</span>
+            <h2 id="connect-title">Connect a device</h2>
+          </div>
+
+          <p class="connect-intro">Open this room on another device on the same Wi-Fi.</p>
+
+          <div class="qr-frame">
+            <img id="qr-code" alt="QR code for this transfer room" hidden>
+            <span id="qr-loading" class="qr-loading">Preparing room code</span>
+          </div>
+
+          <label class="field-label" for="room-link">ROOM LINK</label>
+          <div class="link-control">
+            <input id="room-link" type="text" readonly aria-label="Transfer room link" value="Loading link…">
+            <button id="copy-link" type="button" class="copy-button">Copy</button>
+          </div>
+          <p id="network-note" class="network-note" role="status">Waiting for a local network address.</p>
+
+          <div class="route-diagram" aria-label="Files move directly between devices on this network">
+            <div class="route-endpoint"><span class="device-square" aria-hidden="true"></span><span>This device</span></div>
+            <span class="route-line" aria-hidden="true"></span>
+            <div class="route-endpoint"><span class="device-circle" aria-hidden="true"></span><span>Nearby device</span></div>
+          </div>
+
+          <p class="privacy-note">The room link is the key. Share it only with devices you trust.</p>
+        </aside>
+
+        <section class="transfer-panel" aria-labelledby="transfer-title">
+          <div class="transfer-heading">
+            <div>
+              <div class="section-heading">
+                <span class="section-index">02</span>
+                <h2 id="transfer-title">Shared files</h2>
+              </div>
+              <p id="file-count" class="file-count">Loading room contents…</p>
+            </div>
+            <div class="size-readout"><span class="readout-label">IN ROOM</span><span id="total-size">0 B</span></div>
+          </div>
+
+          <input id="file-picker" type="file" multiple hidden>
+          <div id="drop-zone" class="drop-zone" role="group" aria-label="File upload area">
+            <span class="drop-icon" aria-hidden="true"><span></span></span>
+            <p class="drop-title">Drop files here</p>
+            <p class="drop-detail">Files appear for everyone in this room.</p>
+            <button id="choose-files" type="button" class="choose-button">Choose files</button>
+          </div>
+
+          <div class="queue-heading">
+            <span>ROOM CONTENTS</span>
+            <span id="queue-limit">512 MB per file</span>
+          </div>
+          <div id="file-list" class="file-list" aria-live="polite" aria-busy="true">
+            <p class="empty-state">Looking for shared files…</p>
+          </div>
+          <p id="transfer-status" class="transfer-status" role="status" aria-live="polite"></p>
+        </section>
+      </div>
+
+      <footer class="status-bar">
+        <span>Direct transfer over your local network</span>
+        <span>Temporary room · closes with this app</span>
+      </footer>
+    </main>
+  </body>
+</html>
