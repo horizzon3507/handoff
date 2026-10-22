@@ -1,10 +1,87 @@
-use maud::{html, Markup, DOCTYPE};
+use crate::state::AppState;
 use crate::storage::SharedFile;
+use axum::{
+    body::Body,
+    extract::{Path, State},
+    http::{header, HeaderValue, StatusCode},
+    response::{IntoResponse, Redirect, Response},
+    routing::get,
+    Router,
+};
+use maud::{html, Markup, DOCTYPE};
 
 mod qr;
 mod response;
 pub use qr::render_qr_svg;
 pub use response::with_security_headers;
+
+pub fn router(state: AppState) -> Router {
+    Router::new()
+        .route("/", get(home))
+        .route("/share/{token}", get(room_page))
+        .route("/style.css", get(stylesheet))
+        .route("/qr/{token}.svg", get(qr_code))
+        .with_state(state)
+}
+
+async fn home(State(state): State<AppState>) -> Response {
+    let location = format!("/share/{}", state.token.as_str());
+    with_security_headers(Redirect::temporary(&location).into_response())
+}
+
+async fn room_page(Path(candidate): Path<String>, State(state): State<AppState>) -> Response {
+    if !state.is_room_token(&candidate) {
+        return with_security_headers(StatusCode::NOT_FOUND.into_response());
+    }
+
+    let files = state.store.list().await;
+    let share_url = state.share_url().unwrap_or_default();
+    let markup = render_room_page(
+        state.token.as_str(),
+        &share_url,
+        &format!("/qr/{}.svg", state.token.as_str()),
+        &files,
+    );
+    html_response(markup.into_string())
+}
+
+async fn stylesheet() -> Response {
+    let mut response = Response::new(Body::from(include_str!("../public/style.css")));
+    response.headers_mut().insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("text/css; charset=utf-8"),
+    );
+    with_security_headers(response)
+}
+
+async fn qr_code(Path(candidate): Path<String>, State(state): State<AppState>) -> Response {
+    if !state.is_room_token(&candidate) {
+        return with_security_headers(StatusCode::NOT_FOUND.into_response());
+    }
+    let Some(share_url) = state.share_url() else {
+        return with_security_headers(StatusCode::SERVICE_UNAVAILABLE.into_response());
+    };
+    match render_qr_svg(&share_url) {
+        Ok(svg) => {
+            let mut response = Response::new(Body::from(svg));
+            response.headers_mut().insert(
+                header::CONTENT_TYPE,
+                HeaderValue::from_static("image/svg+xml; charset=utf-8"),
+            );
+            with_security_headers(response)
+        }
+        Err(_) => with_security_headers(StatusCode::INTERNAL_SERVER_ERROR.into_response()),
+    }
+}
+
+fn html_response(body: String) -> Response {
+    let mut response = Response::new(Body::from(body));
+    response.headers_mut().insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("text/html; charset=utf-8"),
+    );
+    with_security_headers(response)
+}
 
 pub fn render_room_page(
     room_token: &str,
@@ -27,7 +104,7 @@ pub fn render_room_page(
                 main.shell {
                     header.window-bar {
                         div.window-title {
-                            span.connection-light aria-hidden="true" {} 
+                            span.connection-light aria-hidden="true" {}
                             span { "Handoff" }
                             span.bar-separator aria-hidden="true" { "/" }
                             span.window-subtitle { "local transfer room" }
