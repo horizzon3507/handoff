@@ -11,5 +11,5 @@ maud = "0.27.0"
 percent-encoding = "2.3.1"
 qrcode = { version = "0.14.1", default-features = false, features = ["svg"] }
 subtle = "2.6.1"
-tokio = { version = "1.45.1", features = ["fs", "macros", "net", "rt-multi-thread", "signal", "sync"] }
+tokio = { version = "1.45.1", features = ["fs", "io-util", "macros", "net", "rt-multi-thread", "signal", "sync"] }
 uuid = { version = "1.17.0", features = ["v4"] }

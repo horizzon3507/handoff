@@ -8,6 +8,7 @@ use tokio::sync::{Mutex, MutexGuard};
 use uuid::Uuid;
 
 mod file;
+mod upload;
 pub use file::{safe_filename, SharedFile};
 
 #[derive(Clone, Copy)]
