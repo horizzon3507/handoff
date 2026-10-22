@@ -1,6 +1,13 @@
 use maud::{html, Markup, DOCTYPE};
+use crate::storage::SharedFile;
 
-pub fn render_room_page(share_url: &str, qr_url: &str) -> Markup {
+pub fn render_room_page(
+    room_token: &str,
+    share_url: &str,
+    qr_url: &str,
+    files: &[SharedFile],
+) -> Markup {
+    let total_bytes = files.iter().map(|file| file.size).sum::<u64>();
     html! {
         (DOCTYPE)
         html lang="en" {
@@ -51,11 +58,14 @@ pub fn render_room_page(share_url: &str, qr_url: &str) -> Markup {
                                         span.section-index { "02" }
                                         h2 id="transfer-title" { "Shared files" }
                                     }
-                                    p.file-count { "0 files in this room" }
+                                    p.file-count {
+                                        (files.len())
+                                        @if files.len() == 1 { " file in this room" } @else { " files in this room" }
+                                    }
                                 }
                                 div.size-readout {
                                     span.readout-label { "IN ROOM" }
-                                    span { "0 B" }
+                                    span { (format_size(total_bytes)) }
                                 }
                             }
                             div.drop-zone {
@@ -65,7 +75,24 @@ pub fn render_room_page(share_url: &str, qr_url: &str) -> Markup {
                                 button.choose-button type="button" disabled { "Choose files" }
                             }
                             div.queue-heading { span { "ROOM CONTENTS" } span { "512 MB per file" } }
-                            div.file-list { p.empty-state { "Nothing here yet. Add a file to begin." } }
+                            div.file-list {
+                                @if files.is_empty() {
+                                    p.empty-state { "Nothing here yet. Add a file to begin." }
+                                } @else {
+                                    @for file in files {
+                                        article.file-row {
+                                            span.file-marker aria-hidden="true" {}
+                                            div.file-details {
+                                                p.file-name title=(file.name) { (file.name) }
+                                                p.file-meta { (format_size(file.size)) }
+                                            }
+                                            a.download-link href=(format!("/files/{room_token}/{}", file.id)) {
+                                                "Download"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                     footer.status-bar {
@@ -76,4 +103,18 @@ pub fn render_room_page(share_url: &str, qr_url: &str) -> Markup {
             }
         }
     }
+}
+
+fn format_size(bytes: u64) -> String {
+    if bytes < 1024 {
+        return format!("{bytes} B");
+    }
+    let units = ["KB", "MB", "GB"];
+    let mut value = bytes as f64;
+    let mut unit = 0;
+    while value >= 1024.0 && unit < units.len() - 1 {
+        value /= 1024.0;
+        unit += 1;
+    }
+    format!("{value:.1} {}", units[unit])
 }

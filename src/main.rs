@@ -24,7 +24,13 @@ async fn main() {
             let share_url = address
                 .map(|address| network::share_url(address, config.port, _room_token.as_str()))
                 .unwrap_or_default();
-            let rendered_page = web::render_room_page(&share_url, "/qr/room.svg");
+            let files = room_store.list().await;
+            let rendered_page = web::render_room_page(
+                _room_token.as_str(),
+                &share_url,
+                "/qr/room.svg",
+                &files,
+            );
             println!("Rendered room page: {} bytes", rendered_page.into_string().len());
             let _ = room_store.cleanup().await;
         }
