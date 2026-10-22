@@ -35,6 +35,9 @@ impl Config {
             Err(error) => return Err(format!("Could not read HANDOFF_HOST: {error}")),
         };
 
-        Ok(Self { port, host_override })
+        Ok(Self {
+            port,
+            host_override,
+        })
     }
 }

@@ -16,32 +16,40 @@ async fn main() {
                     std::process::exit(1);
                 }
             };
-            let state = state::AppState::new(config, room_store.clone());
-            println!(
-                "Handoff Rust runtime state ready on port {}",
-                state.config.port
-            );
-            println!("Local network address: {:?}", state.primary_ip);
-            println!(
-                "Temporary room created at {}",
-                room_store.directory().display()
-            );
-            println!("Shared files: {}", room_store.list().await.len());
-            let share_url = state.share_url().unwrap_or_default();
-            let files = room_store.list().await;
-            let rendered_page =
-                web::render_room_page(state.token.as_str(), &share_url, "/qr/room.svg", &files);
-            println!(
-                "Rendered room page: {} bytes",
-                rendered_page.into_string().len()
-            );
-            let rendered_qr = web::render_qr_svg(&share_url).unwrap_or_default();
-            println!("Rendered room QR: {} bytes", rendered_qr.len());
-            let _ = room_store.cleanup().await;
+            let state = state::AppState::new(config, room_store);
+            let address = std::net::SocketAddr::from(([0, 0, 0, 0], state.config.port));
+            let listener = match tokio::net::TcpListener::bind(address).await {
+                Ok(listener) => listener,
+                Err(error) => {
+                    eprintln!("Could not listen on port {}: {error}", state.config.port);
+                    std::process::exit(1);
+                }
+            };
+
+            println!("Handoff is ready:");
+            println!("  This device: http://127.0.0.1:{}/", state.config.port);
+            if let Some(url) = state.share_url() {
+                println!("  Same Wi-Fi:  {url}");
+            } else {
+                println!("  Same Wi-Fi:  network address not detected; set HANDOFF_HOST to advertise one");
+            }
+            println!("Press Ctrl-C to close the temporary room.");
+
+            if let Err(error) = axum::serve(listener, web::router(state))
+                .with_graceful_shutdown(shutdown_signal())
+                .await
+            {
+                eprintln!("The server stopped with an error: {error}");
+                std::process::exit(1);
+            }
         }
         Err(error) => {
             eprintln!("{error}");
             std::process::exit(1);
         }
     }
+}
+
+async fn shutdown_signal() {
+    let _ = tokio::signal::ctrl_c().await;
 }

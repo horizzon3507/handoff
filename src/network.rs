@@ -9,9 +9,7 @@ pub fn primary_ipv4(override_ip: Option<Ipv4Addr>) -> Option<Ipv4Addr> {
     socket.connect("192.0.2.1:80").ok()?;
 
     match socket.local_addr().ok()?.ip() {
-        IpAddr::V4(address) if !address.is_loopback() && !address.is_unspecified() => {
-            Some(address)
-        }
+        IpAddr::V4(address) if !address.is_loopback() && !address.is_unspecified() => Some(address),
         _ => None,
     }
 }

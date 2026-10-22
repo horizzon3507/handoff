@@ -14,7 +14,6 @@ impl RoomToken {
     }
 
     pub fn matches(&self, candidate: &str) -> bool {
-        self.0.len() == candidate.len()
-            && bool::from(self.0.as_bytes().ct_eq(candidate.as_bytes()))
+        self.0.len() == candidate.len() && bool::from(self.0.as_bytes().ct_eq(candidate.as_bytes()))
     }
 }

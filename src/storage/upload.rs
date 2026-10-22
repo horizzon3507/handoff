@@ -19,7 +19,11 @@ impl RoomStore {
         match result {
             Ok(size) => {
                 let shared_file = SharedFile::new(name, size, path);
-                self.inner.files.lock().await.insert(shared_file.id, shared_file.clone());
+                self.inner
+                    .files
+                    .lock()
+                    .await
+                    .insert(shared_file.id, shared_file.clone());
                 Ok(shared_file)
             }
             Err(error) => {
@@ -29,7 +33,11 @@ impl RoomStore {
         }
     }
 
-    async fn write_field(&self, field: &mut Field<'_>, path: &std::path::Path) -> Result<u64, String> {
+    async fn write_field(
+        &self,
+        field: &mut Field<'_>,
+        path: &std::path::Path,
+    ) -> Result<u64, String> {
         let mut file = tokio::fs::OpenOptions::new()
             .write(true)
             .create_new(true)
