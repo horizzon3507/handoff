@@ -22,6 +22,7 @@ pub fn router(state: AppState) -> Router {
         .route("/style.css", get(stylesheet))
         .route("/qr/{token}.svg", get(qr_code))
         .route("/upload/{token}", post(upload_files))
+        .route("/files/{token}/{file_id}", get(download_file))
         .layer(DefaultBodyLimit::disable())
         .with_state(state)
 }
@@ -105,6 +106,40 @@ async fn upload_files(
     let location = format!("/share/{}?uploaded={uploaded}", state.token.as_str());
     let mut response = Redirect::to(&location).into_response();
     *response.status_mut() = StatusCode::SEE_OTHER;
+    with_security_headers(response)
+}
+
+async fn download_file(
+    Path((candidate, file_id)): Path<(String, String)>,
+    State(state): State<AppState>,
+) -> Response {
+    if !state.is_room_token(&candidate) {
+        return with_security_headers(StatusCode::NOT_FOUND.into_response());
+    }
+    let Ok(file_id) = uuid::Uuid::parse_str(&file_id) else {
+        return with_security_headers(StatusCode::NOT_FOUND.into_response());
+    };
+    let Some(shared_file) = state.store.get(file_id).await else {
+        return with_security_headers(StatusCode::NOT_FOUND.into_response());
+    };
+    let Ok(file) = tokio::fs::File::open(&shared_file.path).await else {
+        return with_security_headers(StatusCode::NOT_FOUND.into_response());
+    };
+
+    let stream = tokio_util::io::ReaderStream::new(file);
+    let mut response = Response::new(Body::from_stream(stream));
+    response.headers_mut().insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static(shared_file.content_type()),
+    );
+    if let Ok(value) = HeaderValue::from_str(&shared_file.content_disposition()) {
+        response
+            .headers_mut()
+            .insert(header::CONTENT_DISPOSITION, value);
+    }
+    response
+        .headers_mut()
+        .insert(header::CONTENT_LENGTH, HeaderValue::from(shared_file.size));
     with_security_headers(response)
 }
 
