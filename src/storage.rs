@@ -3,6 +3,9 @@ use std::path::PathBuf;
 
 use uuid::Uuid;
 
+mod file;
+pub use file::{safe_filename, SharedFile};
+
 pub struct RoomStore {
     directory: PathBuf,
 }
