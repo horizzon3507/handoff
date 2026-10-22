@@ -17,6 +17,16 @@ Open the **This device** address printed in the terminal. Scan its QR code from 
 
 To choose a different port, set `HANDOFF_PORT` (default: `4173`). If automatic network address discovery does not work, set `HANDOFF_HOST` to the computer's local IPv4 address.
 
+## Install the prebuilt Linux app
+
+On Linux x86_64, install the latest release with:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/horizzon3507/handoff/main/install.sh | sh
+```
+
+Then run `handoff`. The installer verifies the downloaded binary checksum and places it in `~/.local/bin` by default. Releases are published for version tags.
+
 ## Send and receive files
 
 Select one or more files in the room and choose **Share selected files**. They appear in the shared file list for every device using that room link. Choose **Download** on the receiving device; the browser saves each file in its usual downloads folder.
