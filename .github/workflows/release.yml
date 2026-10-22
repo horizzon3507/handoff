@@ -27,4 +27,5 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" dist/* \
             --title "Handoff $GITHUB_REF_NAME" \
+            --latest \
             --generate-notes
