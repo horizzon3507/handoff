@@ -2,6 +2,7 @@ mod config;
 mod network;
 mod room;
 mod storage;
+mod web;
 
 #[tokio::main]
 async fn main() {
@@ -20,6 +21,11 @@ async fn main() {
             println!("Local network address: {address:?}");
             println!("Temporary room created at {}", room_store.directory().display());
             println!("Shared files: {}", room_store.list().await.len());
+            let share_url = address
+                .map(|address| network::share_url(address, config.port, _room_token.as_str()))
+                .unwrap_or_default();
+            let rendered_page = web::render_room_page(&share_url, "/qr/room.svg");
+            println!("Rendered room page: {} bytes", rendered_page.into_string().len());
             let _ = room_store.cleanup().await;
         }
         Err(error) => {
